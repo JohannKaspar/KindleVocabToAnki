@@ -2,14 +2,16 @@ from datetime import datetime
 
 import streamlit as st
 
-st.subheader('Customize translated data')
+st.set_page_config(page_title="📥 Step 3 Data Download", page_icon="📥")
+
+st.subheader('📥 Customize translated data')
 
 if 'translated_df' in st.session_state and st.session_state.translated_df.shape[0] > 0:
     translated_data = st.session_state.translated_df
     options = st.multiselect(
         label='Columns to use',
         options=list(translated_data.columns),
-        default=['Word', 'Stem', 'Sentence'] + [col for col in translated_data.columns if 'translated' in col],
+        default=['Word', 'Stem', 'Sentence'] + [col for col in translated_data.columns if any(x in col for x in ['translated_word', 'sentence_with_blank', 'synonyms', 'disambiguation', 'anki_'])],
         help='Select the columns you want to keep',
     )
     # TODO process the case when the original sentence isn't selected
@@ -37,8 +39,17 @@ if 'translated_df' in st.session_state and st.session_state.translated_df.shape[
         index=0,
         help='separator',
     )
-    if highlight is None:
-        new_data['sentence_with_highlight'] = new_data['Sentence']
+    
+    # Check if we have the required columns for highlighting
+    has_sentence = 'Sentence' in new_data.columns
+    has_word = 'Word' in new_data.columns
+    has_translated_word = 'translated_word' in new_data.columns
+    
+    if highlight == 'None' or not has_sentence or not has_word:
+        if has_sentence:
+            new_data['sentence_with_highlight'] = new_data['Sentence']
+        else:
+            new_data['sentence_with_highlight'] = ''
     elif highlight == 'Replace with underscore':
         new_data['sentence_with_highlight'] = new_data.apply(lambda x: x.Sentence.replace(x.Word, '_'), axis=1)
     elif highlight == 'Surround with [] brackets':
@@ -54,9 +65,15 @@ if 'translated_df' in st.session_state and st.session_state.translated_df.shape[
             lambda x: x.Sentence.replace(x.Word, f'<b>{x.Word}</b>'), axis=1
         )
     elif highlight == 'Cloze deletion':
-        new_data['sentence_with_highlight'] = new_data.apply(
-            lambda x: x.Sentence.replace(x.Word, '{{c1::' + x.translated_word + '::' + x.Word + '}}'), axis=1
-        )
+        if has_translated_word:
+            new_data['sentence_with_highlight'] = new_data.apply(
+                lambda x: x.Sentence.replace(x.Word, '{{c1::' + str(x.translated_word) + '::' + x.Word + '}}'), axis=1
+            )
+        else:
+            # Fallback if no translation available
+            new_data['sentence_with_highlight'] = new_data.apply(
+                lambda x: x.Sentence.replace(x.Word, '{{c1::' + x.Word + '}}'), axis=1
+            )
     st.dataframe(new_data)
 
     st.subheader('Download options')

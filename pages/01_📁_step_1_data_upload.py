@@ -3,6 +3,8 @@ import streamlit as st
 
 from src.utils import get_data_from_vocab, show_vocabulary_stats
 
+st.set_page_config(page_title="📁 Step 1 Data Upload", page_icon="📁")
+
 if 'load_state' not in st.session_state:
     st.session_state.load_state = False
 if 'translated_df' not in st.session_state:
@@ -16,7 +18,7 @@ use_sample = None
 if 'data_exists' not in st.session_state:
     st.session_state.data_exists = False
 
-st.subheader('Upload your kindle vocabulary file here')
+st.subheader('📁 Upload your kindle vocabulary file here')
 if st.session_state.loaded_data.shape[0] > 0:
     st.write('The data is already uploaded. You can upload a new file, if necessary.')
 
@@ -80,6 +82,6 @@ if (
     cols_to_show = ['Word', 'Stem', 'Word language', 'Sentence', 'Book title', 'Authors', 'Timestamp']
     st.dataframe(data[cols_to_show])
 
-    my_expander1 = st.expander(label='Show vocabulary statistics')
+    my_expander1 = st.expander(label='📊 Show vocabulary statistics')
     with my_expander1:
         show_vocabulary_stats(data)
