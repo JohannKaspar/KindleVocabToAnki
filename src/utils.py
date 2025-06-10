@@ -247,8 +247,7 @@ def make_more_columns(data: pd.DataFrame, lang: str, to_translate: List[str], tr
     Create additional columns with enhanced translation data using GPT-4o Mini context-aware output.
     Deduplicate words (keep first occurrence), use HTML formatting, and handle partial/failed translations gracefully.
     """
-    # Deduplicate by 'Word', keeping the first occurrence
-    data = data.drop_duplicates(subset=['Word'], keep='first').reset_index(drop=True)
+    # (removed) do not deduplicate here, keep each word–book row intact
 
     # If previous translations exist, reuse them
     prev_results = getattr(st.session_state, 'translated_df', None)
@@ -277,10 +276,10 @@ def make_more_columns(data: pd.DataFrame, lang: str, to_translate: List[str], tr
     # Merge reused and new results
     translation_results = []
     batch_idx = 0
-    for idx, row in data.iterrows():
+    for list_idx, (idx, row) in enumerate(data.iterrows()):
         word = row['Word']
         prev = prev_map.get(word)
-        if translation_input[idx] is None and prev is not None:
+        if translation_input[list_idx] is None and prev is not None:
             translation_results.append({
                 'translated_word': prev.get('translated_word', ''),
                 'sentence_with_blank': prev.get('sentence_with_blank', ''),
